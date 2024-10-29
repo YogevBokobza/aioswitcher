@@ -174,6 +174,10 @@ def convert_str_to_devicetype(device_type: str) -> DeviceType:
         return DeviceType.LIGHT_SL01
     elif device_type == DeviceType.LIGHT_SL01_MINI.value:
         return DeviceType.LIGHT_SL01_MINI
+    elif device_type == DeviceType.LIGHT_SL02.value:
+        return DeviceType.LIGHT_SL02
+    elif device_type == DeviceType.LIGHT_SL02_MINI.value:
+        return DeviceType.LIGHT_SL02_MINI
     return DeviceType.MINI
 
 
@@ -241,6 +245,9 @@ async def validate_token(username: str, token: str) -> bool:
 #   Lights circuit is 0, shutter circuits are numbered 1 & 2.
 # Light SL01 and Light SL01 Mini: has one lights circuits & has no shutter circuits ->
 #   Lights circuit is 0, get_shutter_discovery_packet_index would raise an error.
+# Light SL02 and Light SL02 Mini: has two lights circuits & has no shutter circuits ->
+#   Lights circuits are numbered 0 & 1,
+#   get_shutter_discovery_packet_index would raise an error.
 def get_shutter_discovery_packet_index(
     device_type: DeviceType, circuit_number: int
 ) -> int:
@@ -272,7 +279,11 @@ def get_light_discovery_packet_index(
     Used in retriving the light on/off status from the packet
     (based of device type and circuit number).
     """
-    if device_type == DeviceType.RUNNER_S11:
+    if device_type in (
+        DeviceType.RUNNER_S11,
+        DeviceType.LIGHT_SL02,
+        DeviceType.LIGHT_SL02_MINI,
+    ):
         if circuit_number not in [0, 1]:
             raise ValueError("Invalid circuit number")
         return circuit_number
