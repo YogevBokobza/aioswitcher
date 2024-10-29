@@ -61,8 +61,8 @@ class FakeData:
     position2: List[int] = field(default_factory=lambda: [50, 50])
     direction: List[ShutterDirection] = field(default_factory=lambda: [ShutterDirection.SHUTTER_STOP])
     direction2: List[ShutterDirection] = field(default_factory=lambda: [ShutterDirection.SHUTTER_STOP, ShutterDirection.SHUTTER_STOP])
-    lights: List[DeviceState] = field(default_factory=lambda: [DeviceState.ON])
-    lights2: List[DeviceState] = field(default_factory=lambda: [DeviceState.ON, DeviceState.ON])
+    light: List[DeviceState] = field(default_factory=lambda: [DeviceState.ON])
+    light2: List[DeviceState] = field(default_factory=lambda: [DeviceState.ON, DeviceState.ON])
 
 
 @fixture
@@ -180,6 +180,80 @@ def test_given_a_device_of_type_shutter_when_instantiating_as_a_shutter_should_b
     assert_that(sut.direction).is_equal_to(fake_data.direction)
 
 
+def test_given_a_device_of_type_single_shutter_dual_light_when_instantiating_as_a_shutter_should_be_instatiated_properly(fake_data):
+    sut = SwitcherSingleShutterDualLight(
+        DeviceType.RUNNER_S11,
+        DeviceState.ON,
+        fake_data.device_id,
+        fake_data.device_key,
+        fake_data.ip_address,
+        fake_data.mac_address,
+        fake_data.name,
+        fake_data.token_needed,
+        fake_data.position,
+        fake_data.direction,
+        fake_data.light
+    )
+
+    assert_that(sut.device_type).is_equal_to(DeviceType.RUNNER_S11)
+    assert_that(sut.device_state).is_equal_to(DeviceState.ON)
+    assert_that(sut.device_id).is_equal_to(fake_data.device_id)
+    assert_that(sut.ip_address).is_equal_to(fake_data.ip_address)
+    assert_that(sut.mac_address).is_equal_to(fake_data.mac_address)
+    assert_that(sut.name).is_equal_to(fake_data.name)
+    assert_that(sut.position).is_equal_to(fake_data.position)
+    assert_that(sut.direction).is_equal_to(fake_data.direction)
+    assert_that(sut.light).is_equal_to(fake_data.light)
+
+
+def test_given_a_device_of_type_dual_shutter_single_light_when_instantiating_as_a_shutter_should_be_instatiated_properly(fake_data):
+    sut = SwitcherDualShutterSingleLight(
+        DeviceType.RUNNER_S12,
+        DeviceState.ON,
+        fake_data.device_id,
+        fake_data.device_key,
+        fake_data.ip_address,
+        fake_data.mac_address,
+        fake_data.name,
+        fake_data.token_needed,
+        fake_data.position,
+        fake_data.direction,
+        fake_data.light
+    )
+
+    assert_that(sut.device_type).is_equal_to(DeviceType.RUNNER_S12)
+    assert_that(sut.device_state).is_equal_to(DeviceState.ON)
+    assert_that(sut.device_id).is_equal_to(fake_data.device_id)
+    assert_that(sut.ip_address).is_equal_to(fake_data.ip_address)
+    assert_that(sut.mac_address).is_equal_to(fake_data.mac_address)
+    assert_that(sut.name).is_equal_to(fake_data.name)
+    assert_that(sut.position).is_equal_to(fake_data.position)
+    assert_that(sut.direction).is_equal_to(fake_data.direction)
+    assert_that(sut.light).is_equal_to(fake_data.light)
+
+
+def test_given_a_device_of_type_light_when_instantiating_as_a_shutter_should_be_instatiated_properly(fake_data):
+    sut = SwitcherLight(
+        DeviceType.LIGHT_SL01,
+        DeviceState.ON,
+        fake_data.device_id,
+        fake_data.device_key,
+        fake_data.ip_address,
+        fake_data.mac_address,
+        fake_data.name,
+        fake_data.token_needed,
+        fake_data.light
+    )
+
+    assert_that(sut.device_type).is_equal_to(DeviceType.LIGHT_SL01)
+    assert_that(sut.device_state).is_equal_to(DeviceState.ON)
+    assert_that(sut.device_id).is_equal_to(fake_data.device_id)
+    assert_that(sut.ip_address).is_equal_to(fake_data.ip_address)
+    assert_that(sut.mac_address).is_equal_to(fake_data.mac_address)
+    assert_that(sut.name).is_equal_to(fake_data.name)
+    assert_that(sut.light).is_equal_to(fake_data.light)
+
+
 @mark.parametrize("device_type", [DeviceType.MINI, DeviceType.TOUCH, DeviceType.V2_ESP, DeviceType.V2_QCA, DeviceType.V4])
 def test_given_a_device_of_type_water_heater_when_instantiating_as_a_power_plug_should_raise_an_error(fake_data, device_type):
     assert_that(SwitcherPowerPlug).raises(ValueError).when_called_with(
@@ -259,7 +333,7 @@ def test_given_a_device_of_type_power_plug_when_instantiating_as_a_single_shutte
         fake_data.token_needed,
         fake_data.position,
         fake_data.direction,
-        fake_data.lights2
+        fake_data.light2
     ).is_equal_to("only shutters with dual lights are allowed")
 
 
@@ -275,7 +349,7 @@ def test_given_a_device_of_type_power_plug_when_instantiating_as_a_dual_shutter_
         fake_data.token_needed,
         fake_data.position2,
         fake_data.direction2,
-        fake_data.lights
+        fake_data.light
     ).is_equal_to("only dual shutters with single lights are allowed")
 
 
@@ -289,5 +363,5 @@ def test_given_a_device_of_type_power_plug_when_instantiating_as_a_light_should_
         fake_data.mac_address,
         fake_data.name,
         fake_data.token_needed,
-        fake_data.lights
+        fake_data.light
     ).is_equal_to("only lights are allowed")
