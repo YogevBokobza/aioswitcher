@@ -180,9 +180,9 @@ asyncio.run(
 ```
 
 1. [SwitcherThermostatStateResponse](./codedocs.md#src.aioswitcher.api.messages.SwitcherThermostatStateResponse)
-2. [SwitcherBreezeRemote](./codedocs.md#src.aioswitcher.api.messages.SwitcherBreezeRemote)
+2. [SwitcherBreezeRemote](./codedocs.md#src.aioswitcher.api.remotes.SwitcherBreezeRemote)
 3. [SwitcherBaseResponse](./codedocs.md#src.aioswitcher.api.messages.SwitcherBaseResponse)
-4. [SwitcherBreezeRemoteManager](./codedocs.md#src.aioswitcher.api.SwitcherBreezeRemoteManager)
+4. [SwitcherBreezeRemoteManager](./codedocs.md#src.aioswitcher.api.remotes.SwitcherBreezeRemoteManager)
 
 !!! info
     You can find the supported device types stated in [this enum](./codedocs.md#src.aioswitcher.device.DeviceType) members.
