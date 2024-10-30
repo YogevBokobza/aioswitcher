@@ -103,8 +103,8 @@ We can use the Type2 API to gain the following capabilities on Switcher Breeze, 
 async def control_runner(device_type, device_ip, device_id, device_key, token) :
     # for connecting to a device we need its type, id, login key, token and ip address
     async with SwitcherType2Api(device_type, device_ip, device_id, device_key, token) as api:
-        # get the device current state (1)
-        await api.get_shutter_state()
+        # get the shutter current state, circuit number is 0
+        await api.get_shutter_state(0)
         # open the shutter to 30%, circuit number is 0
         await api.set_position(30, 0)
         # stop the shutter if currently rolling, circuit number is 0
@@ -136,11 +136,11 @@ asyncio.run(
   async def control_light(device_type, device_ip, device_id, device_key, token) :
       # for connecting to a device we need its type, id, login key and ip address
       async with SwitcherType2Api(device_type, device_ip, device_id, device_key, token) as api:
-          # get the device current state
-          await api.get_light_state()
-          # turn on the light, circuit number is 0 (Only for Runner S11 and Runner S12)
+          # get the light current state, circuit number is 0
+          await api.get_light_state(0)
+          # turn on the light, circuit number is 0 (Only for Runner S11, Runner S12 and Lights)
           await api.set_light(DeviceState.ON, 0)
-          # turn off the light, circuit number is 0 (Only for Runner S11 and Runner S12)
+          # turn off the light, circuit number is 0 (Only for Runner S11, Runner S12 and Lights)
           await api.set_light(DeviceState.OFF, 0)
 
   asyncio.run(control_light(DeviceType.LIGHT_SL01, "111.222.11.22", "ab1c2d", "00", "zvVvd7JxtN7CgvkD1Psujw=="))
@@ -180,9 +180,9 @@ asyncio.run(
 ```
 
 1. [SwitcherThermostatStateResponse](./codedocs.md#src.aioswitcher.api.messages.SwitcherThermostatStateResponse)
-2. [SwitcherBreezeRemote](./codedocs.md#src.aioswitcher.api.messages.SwitcherBreezeRemote)
+2. [SwitcherBreezeRemote](./codedocs.md#src.aioswitcher.api.remotes.SwitcherBreezeRemote)
 3. [SwitcherBaseResponse](./codedocs.md#src.aioswitcher.api.messages.SwitcherBaseResponse)
-4. [SwitcherBreezeRemoteManager](./codedocs.md#src.aioswitcher.api.SwitcherBreezeRemoteManager)
+4. [SwitcherBreezeRemoteManager](./codedocs.md#src.aioswitcher.api.remotes.SwitcherBreezeRemoteManager)
 
 !!! info
     You can find the supported device types stated in [this enum](./codedocs.md#src.aioswitcher.device.DeviceType) members.
