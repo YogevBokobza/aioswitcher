@@ -25,7 +25,14 @@ import pytest_asyncio
 from assertpy import assert_that
 from pytest import fixture, mark, raises
 
-from aioswitcher.api import SWITCHER_TCP_PORT_TYPE1, SWITCHER_TCP_PORT_TYPE2, Command, SwitcherApi, SwitcherType1Api, SwitcherType2Api
+from aioswitcher.api import (
+    SWITCHER_TCP_PORT_TYPE1,
+    SWITCHER_TCP_PORT_TYPE2,
+    Command,
+    SwitcherApi,
+    SwitcherType1Api,
+    SwitcherType2Api,
+)
 from aioswitcher.api.messages import (
     SwitcherBaseResponse,
     SwitcherGetSchedulesResponse,
@@ -617,6 +624,7 @@ async def test_stop_position_function_with_a_faulty_get_state_response_should_ra
         with patch.object(reader_mock, "read", return_value=b''):
             await connected_api_type2.stop_shutter(device_index)
     writer_write.assert_called_once()
+
 
 async def test_set_position_function_not_implemented(reader_mock, writer_mock):
     with raises(NotImplementedError):
