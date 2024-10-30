@@ -17,9 +17,10 @@
 from binascii import unhexlify
 from datetime import datetime, timedelta
 from struct import unpack
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
-import pytest_asyncio
+import pytest
+from aiohttp import ClientSession, ContentTypeError
 from assertpy import assert_that
 from pytest import mark
 
@@ -143,29 +144,77 @@ def test_convert_token_to_packet_with_false_token_should_throw_an_error(token, e
     ).when_called_with(token).is_equal_to(response)
 
 
-@pytest_asyncio.fixture
+@pytest.mark.asyncio
 @mark.parametrize("username, token, is_token_valid", [
     ("test@switcher.com", "zvVvd7JxtN7CgvkD1Psujw==", True)
     ])
-async def test_validate_token_should_return_token_valid(mock_post, username, token, is_token_valid):
-    mock_response = mock_post.return_value
-    mock_response.status_code = 200
+async def test_validate_token_should_return_token_valid(username, token, is_token_valid):
+    mock_response = AsyncMock()
+    mock_response.status = 200
     mock_response.json.return_value = {"result": "True"}
-    assert_that(tools.validate_token(username, token)).is_equal_to(is_token_valid)
+
+    mock_session = AsyncMock(spec=ClientSession)
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    with patch("aiohttp.ClientSession", return_value=mock_session):
+        assert_that(await tools.validate_token(username, token)).is_equal_to(is_token_valid)
 
 
-@pytest_asyncio.fixture
+@pytest.mark.asyncio
 @mark.parametrize("username, token, is_token_valid", [
     ("test@switcher.com", "", False),
     ("test@switcher.com", "notvalidtoken", False),
     ("", "notvalidtoken", False),
     ("", "", False)
     ])
-async def test_validate_token_should_return_token_invalid(mock_post, username, token, is_token_valid):
-    mock_response = mock_post.return_value
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"result": "False"}
-    assert_that(tools.validate_token(username, token)).is_equal_to(is_token_valid)
+async def test_validate_token_should_return_token_invalid(username, token, is_token_valid):
+    """Test validate_token with invalid token response."""
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {"result": "false"}
+
+    mock_session = AsyncMock(spec=ClientSession)
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    with patch("aiohttp.ClientSession", return_value=mock_session):
+        assert_that(await tools.validate_token(username, token)).is_equal_to(is_token_valid)
+
+
+@pytest.mark.asyncio
+@mark.parametrize("username, token, return_value", [
+    ("test@switcher.com", "zvVvd7JxtN7CgvkD1Psujw==", False)
+    ])
+async def test_validate_token_http_error(username, token, return_value):
+    """Test validate_token with HTTP error response."""
+    mock_response = AsyncMock()
+    mock_response.status = 404
+
+    mock_session = AsyncMock(spec=ClientSession)
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    with patch("aioswitcher.device.tools.aiohttp.ClientSession", return_value=mock_session):
+        assert_that(await tools.validate_token(username, token)).is_equal_to(return_value)
+
+
+@pytest.mark.asyncio
+@mark.parametrize("username, token, return_value", [
+    ("test@switcher.com", "zvVvd7JxtN7CgvkD1Psujw==", False)
+    ])
+async def test_validate_token_json_error(username, token, return_value):
+    """Test validate_token with invalid JSON response."""
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.side_effect = ContentTypeError(None, None)
+
+    mock_session = AsyncMock(spec=ClientSession)
+    mock_session.__aenter__.return_value = mock_session
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    with patch("aioswitcher.device.tools.aiohttp.ClientSession", return_value=mock_session):
+        assert_that(await tools.validate_token(username, token)).is_equal_to(return_value)
 
 
 @mark.parametrize("device_type, circuit_number, index", [
