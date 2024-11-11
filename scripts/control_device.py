@@ -22,7 +22,7 @@ from datetime import timedelta
 from pprint import PrettyPrinter
 from typing import Any, Dict, List, Union
 
-from aioswitcher.api import Command, SwitcherType1Api, SwitcherType2Api
+from aioswitcher.api import Command, SwitcherApi
 from aioswitcher.api.remotes import SwitcherBreezeRemoteManager
 from aioswitcher.device import (
     DeviceState,
@@ -442,9 +442,7 @@ async def get_thermostat_state(
     token: Union[str, None] = None,
 ) -> None:
     """Use to launch a get_breeze_state request."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(asdict(await api.get_breeze_state(), verbose))
 
 
@@ -458,9 +456,7 @@ async def get_shutter_state(
     token: Union[str, None] = None,
 ) -> None:
     """Use to launch a get_shutter_state request."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(asdict(await api.get_shutter_state(index), verbose))
 
 
@@ -472,7 +468,7 @@ async def get_state(
     verbose: bool,
 ) -> None:
     """Use to launch a get_state request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.get_state(), verbose))
 
 
@@ -492,9 +488,7 @@ async def control_thermostat(
     token: Union[str, None] = None,
 ) -> None:
     """Control Breeze device."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(
             asdict(
                 await api.control_breeze_device(
@@ -520,7 +514,7 @@ async def turn_on(
     verbose: bool,
 ) -> None:
     """Use to launch a turn_on request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.control_device(Command.ON, timer), verbose))
 
 
@@ -532,7 +526,7 @@ async def turn_off(
     verbose: bool,
 ) -> None:
     """Use to launch a turn_off request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.control_device(Command.OFF), verbose))
 
 
@@ -545,7 +539,7 @@ async def set_name(
     verbose: bool,
 ) -> None:
     """Use to launch a set_name request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.set_device_name(name), verbose))
 
 
@@ -560,7 +554,7 @@ async def set_auto_shutdown(
 ) -> None:
     """Use to launch a set_auto_shutdown request."""
     td_val = timedelta(hours=hours, minutes=minutes)
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.set_auto_shutdown(td_val), verbose))
 
 
@@ -572,7 +566,7 @@ async def get_schedules(
     verbose: bool,
 ) -> None:
     """Use to launch a get_schedules request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         response = await api.get_schedules()
         if verbose:
             printer.pprint({"unparsed_response": response.unparsed_response})
@@ -591,7 +585,7 @@ async def delete_schedule(
     verbose: bool,
 ) -> None:
     """Use to launch a delete_schedule request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(asdict(await api.delete_schedule(schedule_id), verbose))
 
 
@@ -606,7 +600,7 @@ async def create_schedule(
     verbose: bool,
 ) -> None:
     """Use to launch a create_schedule request."""
-    async with SwitcherType1Api(device_type, device_ip, device_id, device_key) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key) as api:
         printer.pprint(
             asdict(
                 await api.create_schedule(
@@ -629,9 +623,7 @@ async def stop_shutter(
     token: Union[str, None] = None,
 ) -> None:
     """Stop shutter."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(
             asdict(
                 await api.stop_shutter(index),
@@ -651,9 +643,7 @@ async def set_shutter_position(
     token: Union[str, None] = None,
 ) -> None:
     """Use to set the shutter position."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(
             asdict(
                 await api.set_position(position, index),
@@ -672,9 +662,7 @@ async def get_light_state(
     token: Union[str, None] = None,
 ) -> None:
     """Use to launch a get_light_state request."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(asdict(await api.get_light_state(index), verbose))
 
 
@@ -688,9 +676,7 @@ async def turn_on_light(
     token: Union[str, None] = None,
 ) -> None:
     """Use for turn on light."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(asdict(await api.set_light(DeviceState.ON, index), verbose))
 
 
@@ -704,9 +690,7 @@ async def turn_off_light(
     token: Union[str, None] = None,
 ) -> None:
     """Use for turn off light."""
-    async with SwitcherType2Api(
-        device_type, device_ip, device_id, device_key, token
-    ) as api:
+    async with SwitcherApi(device_type, device_ip, device_id, device_key, token) as api:
         printer.pprint(asdict(await api.set_light(DeviceState.OFF, index), verbose))
 
 

@@ -14,7 +14,6 @@
 
 """Switcher integration TCP socket API module."""
 
-from abc import ABC
 from asyncio import open_connection
 from binascii import unhexlify
 from datetime import timedelta
@@ -83,7 +82,8 @@ class Command(Enum):
     OFF = "0"
 
 
-class SwitcherApi(ABC):
+@final
+class SwitcherApi:
     """Switcher TCP based API.
 
     Args:
@@ -101,7 +101,6 @@ class SwitcherApi(ABC):
         ip_address: str,
         device_id: str,
         device_key: str,
-        port: int = SWITCHER_TCP_PORT_TYPE1,
         token: Union[str, None] = None,
     ) -> None:
         """Initialize the Switcher TCP connection API."""
@@ -109,7 +108,10 @@ class SwitcherApi(ABC):
         self._ip_address = ip_address
         self._device_id = device_id
         self._device_key = device_key
-        self._port = port
+        if self._device_type.protocol_type == 1:
+            self._port = SWITCHER_TCP_PORT_TYPE1
+        else:
+            self._port = SWITCHER_TCP_PORT_TYPE2
         self._connected = False
         self._token = None
         if self._device_type.token_needed:
@@ -202,216 +204,6 @@ class SwitcherApi(ABC):
             self._writer.write(unhexlify(signed_packet))
             response = await self._reader.read(1024)
         return timestamp, SwitcherLoginResponse(response)
-
-    async def get_state(self) -> SwitcherStateResponse:
-        """Use for sending the get state packet to the device.
-
-        Returns:
-            An instance of ``SwitcherStateResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def get_breeze_state(self) -> SwitcherThermostatStateResponse:
-        """Use for sending the get state packet to the Breeze device.
-
-        Returns:
-            An instance of ``SwitcherThermostatStateResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def control_device(
-        self, command: Command, minutes: int = 0
-    ) -> SwitcherBaseResponse:
-        """Use for sending the control packet to the device.
-
-        Args:
-            command: use the ``aioswitcher.api.Command`` enum.
-            minutes: if turning-on optionally incorporate a timer.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def control_breeze_device(
-        self,
-        remote: SwitcherBreezeRemote,
-        state: Union[DeviceState, None] = None,
-        mode: Union[ThermostatMode, None] = None,
-        target_temp: int = 0,
-        fan_level: Union[ThermostatFanLevel, None] = None,
-        swing: Union[ThermostatSwing, None] = None,
-        update_state: bool = False,
-    ) -> SwitcherBaseResponse:
-        """Use for sending the control packet to the Breeze device.
-
-        Args:
-            remote: the remote for the breeze device
-            state: the desired state of the device
-            mode: the desired mode of the device
-            target_temp: the target temperature
-            fan_level: the desired fan level
-            swing: the desired swing state
-            update_state: update the device state without controlling the device
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def stop_shutter(self, index: int = 0) -> SwitcherBaseResponse:
-        """Use for stopping the shutter.
-
-        Args:
-            index: which runner to stop position, default to 0.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def set_position(
-        self, position: int = 0, index: int = 0
-    ) -> SwitcherBaseResponse:
-        """Use for setting the shutter position of the Runners devices.
-
-        Args:
-            position: the position to set the device to, default to 0.
-            index: which runner to set position, default to 0.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def get_shutter_state(self, index: int = 0) -> SwitcherBaseResponse:
-        """Use for sending the get state packet to the Runners devices.
-
-        Args:
-            index: which runner to set get state, default to 0.
-
-        Returns:
-            An instance of ``SwitcherShutterStateResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def set_device_name(self, name: str) -> SwitcherBaseResponse:
-        """Use for sending the set name packet to the device.
-
-        Args:
-            name: string name with the length of 2 >= x >= 32.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def set_auto_shutdown(self, full_time: timedelta) -> SwitcherBaseResponse:
-        """Use for sending the set auto-off packet to the device.
-
-        Args:
-            full_time: timedelta value containing the configuration value for
-                auto-shutdown.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def get_schedules(self) -> SwitcherGetSchedulesResponse:
-        """Use for retrieval of the schedules from the device.
-
-        Returns:
-            An instance of ``SwitcherGetSchedulesResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def delete_schedule(self, schedule_id: str) -> SwitcherBaseResponse:
-        """Use for deleting a schedule from the device.
-
-        Use ``get_schedules`` to retrieve the schedule instance.
-
-        Args:
-            schedule_id: the identification of the schedule for deletion.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def create_schedule(
-        self, start_time: str, end_time: str, days: Set[Days] = set()
-    ) -> SwitcherBaseResponse:
-        """Use for creating a new schedule in the next empty schedule slot.
-
-        Args:
-            start_time: a string start time in %H:%M format. e.g. 13:00.
-            end_time: a string start time in %H:%M format. e.g. 13:00.
-            days: for recurring schedules, add ``Days``.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def get_light_state(self, index: int = 0) -> SwitcherBaseResponse:
-        """Use for sending the get state packet to the Light devices.
-
-        Args:
-            index: which light to set get state, default to 0.
-
-        Returns:
-            An instance of ``SwitcherLightStateResponse``.
-
-        """
-        raise NotImplementedError
-
-    async def set_light(
-        self, command: DeviceState, index: int = 0
-    ) -> SwitcherBaseResponse:
-        """Use for turn on/off light.
-
-        Args:
-            command: use the ``aioswitcher.api.DeviceState`` enum.
-            index: which light to turn on/off, default to 0.
-
-        Returns:
-            An instance of ``SwitcherBaseResponse``.
-
-        """
-        raise NotImplementedError
-
-
-@final
-class SwitcherType1Api(SwitcherApi):
-    """Switcher Type1 devices (Plug, V2, Touch, V4) TCP based API.
-
-    Args:
-        device_type: the type of the device.
-        ip_address: the ip address assigned to the device.
-        device_id: the id of the desired device.
-        device_key: the login key of the device.
-    """
-
-    def __init__(
-        self, device_type: DeviceType, ip_address: str, device_id: str, device_key: str
-    ) -> None:
-        """Initialize the Switcher TCP connection API."""
-        super().__init__(
-            device_type, ip_address, device_id, device_key, SWITCHER_TCP_PORT_TYPE1
-        )
 
     async def get_state(self) -> SwitcherStateResponse:
         """Use for sending the get state packet to the device.
@@ -603,36 +395,6 @@ class SwitcherType1Api(SwitcherApi):
         self._writer.write(unhexlify(signed_packet))
         response = await self._reader.read(1024)
         return SwitcherBaseResponse(response)
-
-
-@final
-class SwitcherType2Api(SwitcherApi):
-    """Switcher Type2 devices (Breeze, Runners) TCP based API.
-
-    Args:
-        device_type: the type of the device.
-        ip_address: the ip address assigned to the device.
-        device_id: the id of the desired device.
-        device_key: the login key of the device.
-    """
-
-    def __init__(
-        self,
-        device_type: DeviceType,
-        ip_address: str,
-        device_id: str,
-        device_key: str,
-        token: Union[str, None] = None,
-    ) -> None:
-        """Initialize the Switcher TCP connection API."""
-        super().__init__(
-            device_type,
-            ip_address,
-            device_id,
-            device_key,
-            SWITCHER_TCP_PORT_TYPE2,
-            token,
-        )
 
     async def control_breeze_device(
         self,
