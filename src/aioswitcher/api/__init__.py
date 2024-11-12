@@ -24,7 +24,6 @@ from types import TracebackType
 from typing import Optional, Set, Tuple, Type, Union, final
 
 from ..device import (
-    DeviceCategory,
     DeviceState,
     DeviceType,
     ThermostatFanLevel,
@@ -63,16 +62,6 @@ SWITCHER_TCP_PORT_TYPE1 = 9957
 # Type 2 devices: Breeze, Runners
 SWITCHER_TCP_PORT_TYPE2 = 10000
 
-SWITCHER_DEVICE_TO_TCP_PORT = {
-    DeviceCategory.THERMOSTAT: SWITCHER_TCP_PORT_TYPE2,
-    DeviceCategory.SHUTTER: SWITCHER_TCP_PORT_TYPE2,
-    DeviceCategory.SINGLE_SHUTTER_DUAL_LIGHT: SWITCHER_TCP_PORT_TYPE2,
-    DeviceCategory.DUAL_SHUTTER_SINGLE_LIGHT: SWITCHER_TCP_PORT_TYPE2,
-    DeviceCategory.LIGHT: SWITCHER_TCP_PORT_TYPE2,
-    DeviceCategory.WATER_HEATER: SWITCHER_TCP_PORT_TYPE1,
-    DeviceCategory.POWER_PLUG: SWITCHER_TCP_PORT_TYPE1,
-}
-
 
 @unique
 class Command(Enum):
@@ -91,7 +80,6 @@ class SwitcherApi:
         ip_address: the ip address assigned to the device.
         device_id: the id of the desired device.
         device_key: the login key of the device.
-        port: the port of the device, default is 9957.
 
     """
 
@@ -108,9 +96,8 @@ class SwitcherApi:
         self._ip_address = ip_address
         self._device_id = device_id
         self._device_key = device_key
-        if self._device_type.protocol_type == 1:
-            self._port = SWITCHER_TCP_PORT_TYPE1
-        else:
+        self._port = SWITCHER_TCP_PORT_TYPE1
+        if device_type.protocol_type == 2:
             self._port = SWITCHER_TCP_PORT_TYPE2
         self._connected = False
         self._token = None
