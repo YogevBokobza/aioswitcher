@@ -30,8 +30,6 @@ from aioswitcher.api import (
     SWITCHER_TCP_PORT_TYPE2,
     Command,
     SwitcherApi,
-    SwitcherType1Api,
-    SwitcherType2Api,
 )
 from aioswitcher.api.messages import (
     SwitcherBaseResponse,
@@ -94,7 +92,7 @@ def writer_mock(writer_write):
 @pytest_asyncio.fixture
 async def connected_api_type1(reader_mock, writer_mock):
     with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-        api = SwitcherType1Api(device_type_api1, device_ip, device_id, device_key)
+        api = SwitcherApi(device_type_api1, device_ip, device_id, device_key)
         await api.connect()
         yield api
         await api.disconnect()
@@ -103,7 +101,7 @@ async def connected_api_type1(reader_mock, writer_mock):
 @pytest_asyncio.fixture
 async def connected_api_type2(reader_mock, writer_mock):
     with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-        api = SwitcherType2Api(device_type_api2, device_ip, device_id, device_key, token_empty)
+        api = SwitcherApi(device_type_api2, device_ip, device_id, device_key, token_empty)
         await api.connect()
         yield api
         await api.disconnect()
@@ -112,7 +110,7 @@ async def connected_api_type2(reader_mock, writer_mock):
 @pytest_asyncio.fixture
 async def connected_api_token_type2(reader_mock, writer_mock):
     with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-        api = SwitcherType2Api(device_type_token_api2, device_ip, device_id, device_key, token_not_empty)
+        api = SwitcherApi(device_type_token_api2, device_ip, device_id, device_key, token_not_empty)
         await api.connect()
         yield api
         await api.disconnect()
@@ -120,7 +118,7 @@ async def connected_api_token_type2(reader_mock, writer_mock):
 
 @patch("logging.Logger.info")
 async def test_stopping_before_started_and_connected_should_write_to_the_info_output(mock_info):
-    api = SwitcherType1Api(device_type_api1, device_ip, device_id, device_key)
+    api = SwitcherApi(device_type_api1, device_ip, device_id, device_key)
     assert_that(api.connected).is_false()
     await api.disconnect()
     mock_info.assert_called_with("switcher device not connected")
@@ -128,14 +126,14 @@ async def test_stopping_before_started_and_connected_should_write_to_the_info_ou
 
 async def test_api_as_a_context_manager(reader_mock, writer_mock):
     with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-        async with SwitcherType1Api(device_type_api1, device_ip, device_id, device_key) as api:
+        async with SwitcherApi(device_type_api1, device_ip, device_id, device_key) as api:
             assert_that(api.connected).is_true()
 
 
 async def test_api_with_token_needed_but_missing_should_raise_error():
     with raises(RuntimeError, match="A token is needed but is missing"):
         with patch("aioswitcher.api.open_connection", return_value=b''):
-            await SwitcherType2Api(device_type_token_api2, device_ip, device_id, device_key, token_empty)
+            await SwitcherApi(device_type_token_api2, device_ip, device_id, device_key, token_empty)
 
 
 async def test_login_function(reader_mock, writer_write, connected_api_type1, resource_path_root):
@@ -190,12 +188,6 @@ async def test_get_state_function_with_valid_packets(reader_mock, writer_write, 
     assert_that(response.unparsed_response).is_equal_to(get_state_response_packet)
 
 
-async def test_get_state_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).get_state()
-
-
 async def test_get_breeze_state_function_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
     login_response_packet = _load_dummy_packet(resource_path_root, "login2_response")
     get_breeze_state_response_packet = _load_dummy_packet(resource_path_root, "get_breeze_state")
@@ -230,12 +222,6 @@ async def test_get_breeze_state_function_with_a_faulty_get_state_response_should
     assert_that(writer_write.call_count).is_equal_to(2)
 
 
-async def test_get_breeze_state_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api2, device_ip, device_id, device_key, device_port2).get_breeze_state()
-
-
 async def test_control_breeze_device_function_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
     four_packets = _get_dummy_packets(resource_path_root, "login2_response", "get_breeze_state", "control_breeze_response", "control_breeze_swing_response")
     with patch.object(reader_mock, "read", side_effect=four_packets):
@@ -244,13 +230,6 @@ async def test_control_breeze_device_function_with_valid_packets(reader_mock, wr
     assert_that(writer_write.call_count).is_equal_to(4)
     assert_that(response).is_instance_of(SwitcherBaseResponse)
     assert_that(response.unparsed_response).is_equal_to(four_packets[-1])
-
-
-async def test_control_breeze_device_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            remote = SwitcherBreezeRemoteManager().get_remote('ELEC7022')
-            await SwitcherApi(device_type_api2, device_ip, device_id, device_key, device_port2).control_breeze_device(remote, DeviceState.ON, ThermostatMode.COOL, 24, ThermostatFanLevel.HIGH, ThermostatSwing.ON)
 
 
 async def test_control_breeze_device_update_state_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
@@ -395,12 +374,6 @@ async def test_turn_off_function_with_valid_packets(reader_mock, writer_write, c
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
 
 
-async def test_control_device_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).control_device(Command.ON, 0)
-
-
 async def test_set_name_function_with_valid_packets(reader_mock, writer_write, connected_api_type1, resource_path_root):
     two_packets = _get_dummy_packets(resource_path_root, "login_response", "set_name_response")
     with patch.object(reader_mock, "read", side_effect=two_packets):
@@ -408,12 +381,6 @@ async def test_set_name_function_with_valid_packets(reader_mock, writer_write, c
     assert_that(writer_write.call_count).is_equal_to(2)
     assert_that(response).is_instance_of(SwitcherBaseResponse)
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
-
-
-async def test_set_name_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).set_device_name("my boiler")
 
 
 async def test_set_auto_shutdown_function_with_valid_packets(reader_mock, writer_write, connected_api_type1, resource_path_root):
@@ -425,12 +392,6 @@ async def test_set_auto_shutdown_function_with_valid_packets(reader_mock, writer
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
 
 
-async def test_set_auto_shutdown_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).set_auto_shutdown(timedelta(hours=2, minutes=30))
-
-
 async def test_get_schedules_function_with_valid_packets(reader_mock, writer_write, connected_api_type1, resource_path_root):
     two_packets = _get_dummy_packets(resource_path_root, "login_response", "get_schedules_response")
     with patch.object(reader_mock, "read", side_effect=two_packets):
@@ -438,12 +399,6 @@ async def test_get_schedules_function_with_valid_packets(reader_mock, writer_wri
     assert_that(writer_write.call_count).is_equal_to(2)
     assert_that(response).is_instance_of(SwitcherGetSchedulesResponse)
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
-
-
-async def test_get_schedules_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).get_schedules()
 
 
 async def test_delete_schedule_function_with_valid_packets(reader_mock, writer_write, connected_api_type1, resource_path_root):
@@ -455,12 +410,6 @@ async def test_delete_schedule_function_with_valid_packets(reader_mock, writer_w
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
 
 
-async def test_delete_schedule_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).delete_schedule("0")
-
-
 async def test_create_schedule_function_with_valid_packets(reader_mock, writer_write, connected_api_type1, resource_path_root):
     two_packets = _get_dummy_packets(resource_path_root, "login_response", "create_schedule_response")
     with patch.object(reader_mock, "read", side_effect=two_packets):
@@ -468,12 +417,6 @@ async def test_create_schedule_function_with_valid_packets(reader_mock, writer_w
     assert_that(writer_write.call_count).is_equal_to(2)
     assert_that(response).is_instance_of(SwitcherBaseResponse)
     assert_that(response.unparsed_response).is_equal_to(two_packets[-1])
-
-
-async def test_create_schedule_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api1, device_ip, device_id, device_key, device_port).create_schedule("18:00", "19:00")
 
 
 async def test_stop_shutter_device_function_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
@@ -492,12 +435,6 @@ async def test_stop_shutter_token_device_function_with_valid_packets(reader_mock
     assert_that(writer_write.call_count).is_equal_to(3)
     assert_that(response).is_instance_of(SwitcherBaseResponse)
     assert_that(response.unparsed_response).is_equal_to(three_packets[-1])
-
-
-async def test_stop_shutter_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api2, device_ip, device_id, device_key, device_port2).stop_shutter(0)
 
 
 async def test_set_shutter_position_device_function_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
@@ -551,12 +488,6 @@ async def test_get_light_state_function_with_a_faulty_get_state_response_should_
     assert_that(writer_write.call_count).is_equal_to(2)
 
 
-async def test_get_light_state_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_token_api2, device_ip, device_id, device_key, device_port2, token_not_empty).get_light_state()
-
-
 async def test_set_light_function_with_valid_packets(reader_mock, writer_write, connected_api_token_type2, resource_path_root):
     three_packets = _get_dummy_packets(resource_path_root, "login_response", "login2_response", "set_light_response")
     with patch.object(reader_mock, "read", side_effect=three_packets):
@@ -573,12 +504,6 @@ async def test_set_light_function_with_valid_packets_second_light(reader_mock, w
     assert_that(writer_write.call_count).is_equal_to(3)
     assert_that(response).is_instance_of(SwitcherBaseResponse)
     assert_that(response.unparsed_response).is_equal_to(three_packets[-1])
-
-
-async def test_set_light_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_token_api2, device_ip, device_id, device_key, device_port2, token_not_empty).set_light(Command.ON, device_index2)
 
 
 async def test_get_shutter_state_function_with_valid_packets(reader_mock, writer_write, connected_api_type2, resource_path_root):
@@ -606,12 +531,6 @@ async def test_get_shutter_state_function_with_a_faulty_get_state_response_shoul
     assert_that(writer_write.call_count).is_equal_to(2)
 
 
-async def test_get_shutter_state_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api2, device_ip, device_id, device_key, device_port2).get_shutter_state()
-
-
 async def test_set_position_function_with_a_faulty_get_state_response_should_raise_error(reader_mock, writer_write, connected_api_type2):
     with raises(RuntimeError, match="login request was not successful"):
         with patch.object(reader_mock, "read", return_value=b''):
@@ -624,12 +543,6 @@ async def test_stop_position_function_with_a_faulty_get_state_response_should_ra
         with patch.object(reader_mock, "read", return_value=b''):
             await connected_api_type2.stop_shutter(device_index)
     writer_write.assert_called_once()
-
-
-async def test_set_position_function_not_implemented(reader_mock, writer_mock):
-    with raises(NotImplementedError):
-        with patch("aioswitcher.api.open_connection", return_value=(reader_mock, writer_mock)):
-            await SwitcherApi(device_type_api2, device_ip, device_id, device_key, device_port2).set_position(50)
 
 
 def _get_dummy_packets(resource_path_root, *packets):
