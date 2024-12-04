@@ -15,6 +15,7 @@
 """Switcher integration TCP socket API module."""
 
 from asyncio import open_connection
+from binascii import unhexlify
 from datetime import timedelta
 from enum import Enum, unique
 from logging import getLogger
@@ -36,13 +37,14 @@ from ..device.tools import (
     get_light_api_packet_index,
     get_shutter_api_packet_index,
     minutes_to_hexadecimal_seconds,
+    set_message_length,
+    sign_packet_with_crc_key,
     string_to_hexadecimale_device_name,
     timedelta_to_hexadecimal_seconds,
 )
 from ..schedule import Days
 from ..schedule.tools import time_to_hexadecimal_timestamp, weekdays_to_hexadecimal
 from . import packets
-from .helper import send_packet
 from .messages import (
     SwitcherBaseResponse,
     SwitcherGetSchedulesResponse,
@@ -176,14 +178,32 @@ class SwitcherApi:
         else:
             packet = packets.LOGIN_PACKET_TYPE1.format(timestamp, self._device_key)
 
-        response = await send_packet(self._writer, self._reader, "login", packet)
+        response = await self._send_packet("login", packet)
 
         if bool(self._token):
             packet = packets.LOGIN2_TOKEN_PACKET_TYPE2.format(
                 self._device_id, timestamp, self._token
             )
-            response = await send_packet(self._writer, self._reader, "login2", packet)
+            response = await self._send_packet("login2", packet)
         return timestamp, SwitcherLoginResponse(response)
+
+    async def _send_packet(self, packet_id: str, packet: str) -> bytes:
+        """Sign and send a packet, then read the response.
+
+        Args:
+            packet_id (str): The identifier for the packet being sent.
+            packet (str): The packet to be sent.
+
+        Returns:
+            bytes: The response from the device.
+        """
+        packet = set_message_length(packet)
+        signed_packet = sign_packet_with_crc_key(packet)
+
+        logger.debug(f"sending a {packet_id} packet")
+        self._writer.write(unhexlify(signed_packet))
+        response = await self._reader.read(1024)
+        return response
 
     async def get_state(self) -> SwitcherStateResponse:
         """Use for sending the get state packet to the device.
@@ -197,9 +217,7 @@ class SwitcherApi:
             packet = packets.GET_STATE_PACKET_TYPE1.format(
                 login_resp.session_id, timestamp, self._device_id
             )
-            state_resp = await send_packet(
-                self._writer, self._reader, "get state", packet
-            )
+            state_resp = await self._send_packet("get state", packet)
             try:
                 response = SwitcherStateResponse(state_resp)
                 if response.successful:
@@ -234,7 +252,7 @@ class SwitcherApi:
             command.value,
             timer,
         )
-        response = await send_packet(self._writer, self._reader, "control", packet)
+        response = await self._send_packet("control", packet)
         return SwitcherBaseResponse(response)
 
     async def set_auto_shutdown(self, full_time: timedelta) -> SwitcherBaseResponse:
@@ -256,9 +274,7 @@ class SwitcherApi:
             self._device_id,
             auto_shutdown,
         )
-        response = await send_packet(
-            self._writer, self._reader, "set auto shutdown", packet
-        )
+        response = await self._send_packet("set auto shutdown", packet)
         return SwitcherBaseResponse(response)
 
     async def set_device_name(self, name: str) -> SwitcherBaseResponse:
@@ -279,7 +295,7 @@ class SwitcherApi:
             self._device_id,
             device_name,
         )
-        response = await send_packet(self._writer, self._reader, "set name", packet)
+        response = await self._send_packet("set name", packet)
         return SwitcherBaseResponse(response)
 
     async def get_schedules(self) -> SwitcherGetSchedulesResponse:
@@ -295,9 +311,7 @@ class SwitcherApi:
             timestamp,
             self._device_id,
         )
-        response = await send_packet(
-            self._writer, self._reader, "get schedules", packet
-        )
+        response = await self._send_packet("get schedules", packet)
         return SwitcherGetSchedulesResponse(response)
 
     async def delete_schedule(self, schedule_id: str) -> SwitcherBaseResponse:
@@ -316,9 +330,7 @@ class SwitcherApi:
         packet = packets.DELETE_SCHEDULE_PACKET.format(
             login_resp.session_id, timestamp, self._device_id, schedule_id
         )
-        response = await send_packet(
-            self._writer, self._reader, "delete schedule", packet
-        )
+        response = await self._send_packet("delete schedule", packet)
         return SwitcherBaseResponse(response)
 
     async def create_schedule(
@@ -353,9 +365,7 @@ class SwitcherApi:
             self._device_id,
             new_schedule,
         )
-        response = await send_packet(
-            self._writer, self._reader, "create schedule", packet
-        )
+        response = await self._send_packet("create schedule", packet)
         return SwitcherBaseResponse(response)
 
     async def control_breeze_device(
@@ -424,9 +434,7 @@ class SwitcherApi:
                     fan_level.value,
                     set_swing.value,
                 )
-                response = await send_packet(
-                    self._writer, self._reader, "set status", packet
-                )
+                response = await self._send_packet("set status", packet)
             else:
                 command = remote.build_command(
                     state, mode, target_temp, fan_level, set_swing, current_state.state
@@ -439,9 +447,7 @@ class SwitcherApi:
                     command.length,
                     command.command,
                 )
-                response = await send_packet(
-                    self._writer, self._reader, "control", packet
-                )
+                response = await self._send_packet("control", packet)
             cmd_response = SwitcherBaseResponse(response)
 
             if not cmd_response.successful:
@@ -486,7 +492,7 @@ class SwitcherApi:
             command.command,
         )
 
-        response = await send_packet(self._writer, self._reader, "control", packet)
+        response = await self._send_packet("control", packet)
         return SwitcherBaseResponse(response)
 
     async def stop_shutter(self, index: int = 0) -> SwitcherBaseResponse:
@@ -526,7 +532,7 @@ class SwitcherApi:
                 login_resp.session_id, timestamp, self._device_id
             )
 
-        response = await send_packet(self._writer, self._reader, "stop control", packet)
+        response = await self._send_packet("stop control", packet)
         return SwitcherBaseResponse(response)
 
     async def set_position(
@@ -570,7 +576,7 @@ class SwitcherApi:
                 login_resp.session_id, timestamp, self._device_id, hex_pos
             )
 
-        response = await send_packet(self._writer, self._reader, "control", packet)
+        response = await self._send_packet("control", packet)
         return SwitcherBaseResponse(response)
 
     async def set_shutter_child_lock(
@@ -641,7 +647,7 @@ class SwitcherApi:
             login_resp.session_id, timestamp, self._device_id
         )
 
-        state_resp = await send_packet(self._writer, self._reader, "get state", packet)
+        state_resp = await self._send_packet("get state", packet)
         try:
             response = SwitcherThermostatStateResponse(state_resp)
             return response
@@ -664,9 +670,7 @@ class SwitcherApi:
                 login_resp.session_id, timestamp, self._device_id
             )
 
-            state_resp = await send_packet(
-                self._writer, self._reader, "get state", packet
-            )
+            state_resp = await self._send_packet("get state", packet)
             try:
                 response = SwitcherShutterStateResponse(
                     state_resp, self._device_type, index
@@ -694,9 +698,7 @@ class SwitcherApi:
                 login_resp.session_id, timestamp, self._device_id
             )
 
-            state_resp = await send_packet(
-                self._writer, self._reader, "get state", packet
-            )
+            state_resp = await self._send_packet("get state", packet)
             try:
                 response = SwitcherLightStateResponse(
                     state_resp, self._device_type, index
@@ -744,5 +746,5 @@ class SwitcherApi:
             logger.error("Failed to set light device with id %s", self._device_id)
             raise RuntimeError("a token is needed but missing or not valid")
 
-        response = await send_packet(self._writer, self._reader, "control", packet)
+        response = await self._send_packet("control", packet)
         return SwitcherBaseResponse(response)
