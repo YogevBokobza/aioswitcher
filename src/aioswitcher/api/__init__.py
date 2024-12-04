@@ -619,13 +619,7 @@ class SwitcherApi:
                 login_resp.session_id, timestamp, self._device_id, hex_pos
             )
 
-        packet = set_message_length(packet)
-        signed_packet = sign_packet_with_crc_key(packet)
-
-        logger.debug("sending a control packet")
-
-        self._writer.write(unhexlify(signed_packet))
-        response = await self._reader.read(1024)
+        response = await self._send_packet("control", packet)
         return SwitcherBaseResponse(response)
 
     async def get_breeze_state(self) -> SwitcherThermostatStateResponse:
