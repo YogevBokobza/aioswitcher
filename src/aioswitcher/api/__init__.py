@@ -153,6 +153,26 @@ class SwitcherApi:
             logger.info("switcher device not connected")
         self._connected = False
 
+
+    async def _send_packet(self, packet_id: str, packet: str) -> bytes:
+        """Sign and send a packet, then read the response.
+
+        Args:
+            packet_id (str): The identifier for the packet being sent.
+            packet (str): The packet to be sent.
+
+        Returns:
+            bytes: The response from the device.
+        """
+        packet = set_message_length(packet)
+        signed_packet = sign_packet_with_crc_key(packet)
+
+        logger.debug(f"sending a {packet_id} packet")
+        self._writer.write(unhexlify(signed_packet))
+        response = await self._reader.read(1024)
+        return response
+
+
     async def _login(self) -> Tuple[str, SwitcherLoginResponse]:
         """Use for sending the login packet to the device.
 
@@ -187,23 +207,6 @@ class SwitcherApi:
             response = await self._send_packet("login2", packet)
         return timestamp, SwitcherLoginResponse(response)
 
-    async def _send_packet(self, packet_id: str, packet: str) -> bytes:
-        """Sign and send a packet, then read the response.
-
-        Args:
-            packet_id (str): The identifier for the packet being sent.
-            packet (str): The packet to be sent.
-
-        Returns:
-            bytes: The response from the device.
-        """
-        packet = set_message_length(packet)
-        signed_packet = sign_packet_with_crc_key(packet)
-
-        logger.debug(f"sending a {packet_id} packet")
-        self._writer.write(unhexlify(signed_packet))
-        response = await self._reader.read(1024)
-        return response
 
     async def get_state(self) -> SwitcherStateResponse:
         """Use for sending the get state packet to the device.
