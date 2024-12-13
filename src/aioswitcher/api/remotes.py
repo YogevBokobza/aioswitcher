@@ -27,14 +27,6 @@ logger = getLogger(__name__)
 
 BREEZE_REMOTE_DB_FPATH = str(Path(__file__).parent.parent) + "/resources/irset_db.json"
 
-COMMAND_TO_MODE = {
-    "aa": ThermostatMode.AUTO,
-    "ad": ThermostatMode.DRY,
-    "aw": ThermostatMode.FAN,
-    "ar": ThermostatMode.COOL,
-    "ah": ThermostatMode.HEAT,
-}
-
 MODE_TO_COMMAND = {
     ThermostatMode.AUTO: "aa",
     ThermostatMode.DRY: "ad",
@@ -43,12 +35,7 @@ MODE_TO_COMMAND = {
     ThermostatMode.HEAT: "ah",
 }
 
-COMMAND_TO_FAN_LEVEL = {
-    "f0": ThermostatFanLevel.AUTO,
-    "f1": ThermostatFanLevel.LOW,
-    "f2": ThermostatFanLevel.MEDIUM,
-    "f3": ThermostatFanLevel.HIGH,
-}
+COMMAND_TO_MODE = {v: k for k, v in MODE_TO_COMMAND.items()}
 
 FAN_LEVEL_TO_COMMAND = {
     ThermostatFanLevel.AUTO: "f0",
@@ -56,6 +43,8 @@ FAN_LEVEL_TO_COMMAND = {
     ThermostatFanLevel.MEDIUM: "f2",
     ThermostatFanLevel.HIGH: "f3",
 }
+
+COMMAND_TO_FAN_LEVEL = {v: k for k, v in FAN_LEVEL_TO_COMMAND.items()}
 
 # The following are remote IDs (list provided by Switcher) which
 # behaves differently in commanding their swing.
