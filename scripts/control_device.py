@@ -32,10 +32,28 @@ from aioswitcher.device import (
     ThermostatMode,
     ThermostatSwing,
 )
-from aioswitcher.device.tools import convert_str_to_devicetype
 from aioswitcher.schedule import Days
 
 printer = PrettyPrinter(indent=4)
+
+DEVICES = {
+    DeviceType.MINI.value.lower(): DeviceType.MINI,
+    DeviceType.POWER_PLUG.value.lower(): DeviceType.POWER_PLUG,
+    DeviceType.TOUCH.value.lower(): DeviceType.TOUCH,
+    DeviceType.V2_ESP.value.lower(): DeviceType.V2_ESP,
+    DeviceType.V2_QCA.value.lower(): DeviceType.V2_QCA,
+    DeviceType.V4.value.lower(): DeviceType.V4,
+    DeviceType.BREEZE.value.lower(): DeviceType.BREEZE,
+    DeviceType.RUNNER.value.lower(): DeviceType.RUNNER,
+    DeviceType.RUNNER_MINI.value.lower(): DeviceType.RUNNER_MINI,
+    DeviceType.RUNNER_S11.value.lower(): DeviceType.RUNNER_S11,
+    DeviceType.RUNNER_S12.value.lower(): DeviceType.RUNNER_S12,
+    DeviceType.LIGHT_SL01.value.lower(): DeviceType.LIGHT_SL01,
+    DeviceType.LIGHT_SL01_MINI.value.lower(): DeviceType.LIGHT_SL01_MINI,
+    DeviceType.LIGHT_SL02.value.lower(): DeviceType.LIGHT_SL02,
+    DeviceType.LIGHT_SL02_MINI.value.lower(): DeviceType.LIGHT_SL02_MINI,
+    DeviceType.LIGHT_SL03.value.lower(): DeviceType.LIGHT_SL03,
+}
 
 _examples = """example usage:
 
@@ -775,12 +793,14 @@ def main() -> None:
         args = main_parser.parse_args()
 
         if "device_type" in args and type(args.device_type) is not DeviceType:
-            args.device_type = convert_str_to_devicetype(args.device_type)
+            device_type = DEVICES[args.device_type.lower()]
+        else:
+            device_type = args.device_type
 
         if args.action == "get_state":
             asyncio.run(
                 get_state(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -790,7 +810,7 @@ def main() -> None:
         elif args.action == "turn_on":
             asyncio.run(
                 turn_on(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -801,7 +821,7 @@ def main() -> None:
         elif args.action == "turn_off":
             asyncio.run(
                 turn_off(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -811,7 +831,7 @@ def main() -> None:
         elif args.action == "set_name":
             asyncio.run(
                 set_name(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -822,7 +842,7 @@ def main() -> None:
         elif args.action == "set_auto_shutdown":
             asyncio.run(
                 set_auto_shutdown(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -834,7 +854,7 @@ def main() -> None:
         elif args.action == "get_schedules":
             asyncio.run(
                 get_schedules(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -844,7 +864,7 @@ def main() -> None:
         elif args.action == "delete_schedule":
             asyncio.run(
                 delete_schedule(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -855,7 +875,7 @@ def main() -> None:
         elif args.action == "create_schedule":
             asyncio.run(
                 create_schedule(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -869,7 +889,7 @@ def main() -> None:
         elif args.action == "get_shutter_state":
             asyncio.run(
                 get_shutter_state(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -882,7 +902,7 @@ def main() -> None:
         elif args.action == "stop_shutter":
             asyncio.run(
                 stop_shutter(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -895,7 +915,7 @@ def main() -> None:
         elif args.action == "set_shutter_position":
             asyncio.run(
                 set_shutter_position(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -909,7 +929,7 @@ def main() -> None:
         elif args.action == "turn_on_shutter_child_lock":
             asyncio.run(
                 turn_on_shutter_child_lock(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -922,7 +942,7 @@ def main() -> None:
         elif args.action == "turn_off_shutter_child_lock":
             asyncio.run(
                 turn_off_shutter_child_lock(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -935,7 +955,7 @@ def main() -> None:
         elif args.action == "control_thermostat":
             asyncio.run(
                 control_thermostat(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -953,7 +973,7 @@ def main() -> None:
         elif args.action == "get_thermostat_state":
             asyncio.run(
                 get_thermostat_state(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -965,7 +985,7 @@ def main() -> None:
         elif args.action == "get_light_state":
             asyncio.run(
                 get_light_state(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -978,7 +998,7 @@ def main() -> None:
         elif args.action == "turn_on_light":
             asyncio.run(
                 turn_on_light(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,
@@ -991,7 +1011,7 @@ def main() -> None:
         elif args.action == "turn_off_light":
             asyncio.run(
                 turn_off_light(
-                    args.device_type,
+                    device_type,
                     args.device_id,
                     args.device_key,
                     args.ip_address,

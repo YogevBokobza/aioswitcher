@@ -98,35 +98,6 @@ def test_watts_to_amps_with_parameterized_watts_should_procude_expected_amps(wat
     assert_that(tools.watts_to_amps(watts)).is_equal_to(amps)
 
 
-@mark.parametrize("str, type", [
-    ("Switcher Mini", DeviceType.MINI),
-    ("Switcher Power Plug", DeviceType.POWER_PLUG),
-    ("Switcher Touch", DeviceType.TOUCH),
-    ("Switcher V2 (esp)", DeviceType.V2_ESP),
-    ("Switcher V2 (qualcomm)", DeviceType.V2_QCA),
-    ("Switcher V4", DeviceType.V4),
-    ("Switcher Breeze", DeviceType.BREEZE),
-    ("Switcher Runner", DeviceType.RUNNER),
-    ("Switcher Runner Mini", DeviceType.RUNNER_MINI),
-    ("Switcher Runner S11", DeviceType.RUNNER_S11),
-    ("Switcher Runner S12", DeviceType.RUNNER_S12),
-    ("Switcher Light SL01", DeviceType.LIGHT_SL01),
-    ("Switcher Light SL01 Mini", DeviceType.LIGHT_SL01_MINI),
-    ("Switcher Light SL02", DeviceType.LIGHT_SL02),
-    ("Switcher Light SL02 Mini", DeviceType.LIGHT_SL02_MINI),
-    ("Switcher Light SL03", DeviceType.LIGHT_SL03),
-    ])
-def test_convert_str_to_devicetype_should_return_expected_devicetype(str, type):
-    assert_that(tools.convert_str_to_devicetype(str)).is_equal_to(type)
-
-
-@mark.parametrize("str, type", [
-    ("Switcher new device does not define", DeviceType.MINI)
-    ])
-def test_convert_str_to_devicetype_with_unknown_device_should_return_mini(str, type):
-    assert_that(tools.convert_str_to_devicetype(str)).is_equal_to(type)
-
-
 @mark.parametrize("token, token_packet", [
     ("zvVvd7JxtN7CgvkD1Psujw==", "eafc3e34")
     ])
