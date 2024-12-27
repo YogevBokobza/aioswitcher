@@ -61,7 +61,6 @@ jobs:
 
       - name: Push to CodeCov
         uses: codecov/codecov-action@v5
-        if: ${{ matrix.python == env.MAIN_PY_VER }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
