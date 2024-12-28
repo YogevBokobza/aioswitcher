@@ -57,7 +57,7 @@ jobs:
 
       - name: Determine version and create changelog
         id: bumper
-        uses: tomerfi/version-bumper-action@2.0.2
+        uses: tomerfi/version-bumper-action@2.0.3
         with:
           bump: '${{ github.event.inputs.bump }}'
 
@@ -66,17 +66,15 @@ jobs:
         with:
           file: pyproject.toml
           key: tool.poetry.version
-          value: ${{ steps.bumper.outputs.new_version }}
+          value: ${{ steps.bumper.outputs.next }}
 
-      # yamllint disable rule:line-length
       - name: Commit, tag, and push
         run: |
           git add pyproject.toml
-          git commit -m "build: bump version to ${{ steps.bumper.outputs.new_version }} [skip ci]"
+          git commit -m "build: bump version to ${{ steps.bumper.outputs.next }} [skip ci]"
           git push
-          git tag ${{ steps.bumper.outputs.new_version }} -m "${{ steps.bumper.outputs.new_version }}"
-          git push origin ${{ steps.bumper.outputs.new_version }}
-      # yamllint enable rule:line-length
+          git tag ${{ steps.bumper.outputs.next }} -m "${{ steps.bumper.outputs.next }}"
+          git push origin ${{ steps.bumper.outputs.next }}
 
       - name: Verify documentation site build
         run: |
@@ -94,22 +92,20 @@ jobs:
         with:
           file: pyproject.toml
           key: tool.poetry.version
-          value: ${{ steps.bumper.outputs.next_dev_iteration }}
+          value: ${{ steps.bumper.outputs.dev }}
 
-      # yamllint disable rule:line-length
       - name: Commit and push
         run: |
           git add pyproject.toml
-          git commit -m "build: bump version to ${{ steps.bumper.outputs.next_dev_iteration }} [skip ci]"
+          git commit -m "build: bump version to ${{ steps.bumper.outputs.dev }} [skip ci]"
           git push
-      # yamllint enable rule:line-length
 
       - name: Create a release name
         id: release_name
         uses: actions/github-script@v7
         with:
           script: |
-            var retval = '${{ steps.bumper.outputs.new_version }}'
+            var retval = '${{ steps.bumper.outputs.next }}'
             if ('${{ github.event.inputs.title }}') {
               retval = retval.concat(' - ${{ github.event.inputs.title }}')
             }
@@ -123,7 +119,7 @@ jobs:
           script: |
             const repo_name = context.payload.repository.full_name
             const response = await github.request('POST /repos/' + repo_name + '/releases', {
-              tag_name: '${{ steps.bumper.outputs.new_version }}',
+              tag_name: '${{ steps.bumper.outputs.next }}',
               name: '${{ steps.release_name.outputs.value }}',
               generate_release_notes: true
             })
