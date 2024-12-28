@@ -57,9 +57,11 @@ jobs:
 
       - name: Determine version and create changelog
         id: bumper
-        uses: tomerfi/version-bumper-action@2.0.3
+        uses: tomerfi/version-bumper-action@2.0.2
         with:
           bump: '${{ github.event.inputs.bump }}'
+
+      - run: echo ${{ steps.bumper.outputs.new_version }}
 
       - name: Set new project version
         uses: sandstromviktor/toml-editor@2.0.0
