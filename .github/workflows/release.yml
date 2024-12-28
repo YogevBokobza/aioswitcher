@@ -61,8 +61,6 @@ jobs:
         with:
           bump: '${{ github.event.inputs.bump }}'
 
-      - run: echo ${{ steps.bumper.outputs.new_version }}
-
       - name: Set new project version
         uses: sandstromviktor/toml-editor@2.0.0
         with:
