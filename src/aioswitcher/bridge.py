@@ -475,6 +475,7 @@ class DatagramParser:
             or len(self.message)
             == 207  # Switcher Light SL01, Switcher Light SL01 Mini,
             # Switcher Light SL02, Switcher Light SL02 Mini and Switcher Light SL03
+            or len(self.message) == 211  # Switcher OnWall
         )
 
     def get_ip_type1(self) -> str:

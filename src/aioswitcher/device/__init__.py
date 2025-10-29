@@ -96,6 +96,13 @@ class DeviceType(Enum):
         DeviceCategory.LIGHT,
         True,
     )
+    ONWALL = (
+        "Switcher OnWall",
+        "0321",
+        1,
+        DeviceCategory.WATER_HEATER,
+        False,
+    )
 
     def __new__(
         cls,
